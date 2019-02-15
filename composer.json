@@ -1,0 +1,14 @@
+{
+    "name": "lasserafn/sample-project",
+    "authors": [
+        {
+            "name": "Lasse Rafn",
+            "email": "lasserafn@gmail.com"
+        }
+    ],
+
+
+    "autoload": {
+        "files": ["mix.php"]
+    }
+}
