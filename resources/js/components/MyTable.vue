@@ -6,14 +6,18 @@
             </tr>
 
         </table>
-    <table>
-        <tr v-for="raw in horizontalData">
-            <th v-for="col in raw">{{col}}</th>
-        </tr>
+        <div class="row">
+            <table>
+                <tr v-for="raw in horizontalData">
+                    <th v-for="col in raw">{{col}}</th>
+                </tr>
 
-    </table>
+            </table>
+            <slot></slot>
+        </div>
 
-    <slot></slot>
+
+
 
     </div>
     
@@ -132,10 +136,14 @@
         border: 1px solid black;
         border-collapse: collapse;
         min-width: 15px;
+        height: 15px;
         box-sizing: border-box;
         font-family: Arial;
         font-size: 10px;
         user-select: none;
         pointer-events: none;
+    }
+    .row{
+        display: flex;
     }
 </style>

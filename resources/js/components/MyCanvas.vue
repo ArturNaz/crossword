@@ -12,7 +12,7 @@
             return {
 
               context: null,
-                stroke:10,
+                stroke:15,
 
             }
         },
