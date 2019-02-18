@@ -61,16 +61,60 @@
         },
         methods:{
             init() {
-                var self = this;
+
+                const self = this;
+
                 if(self.img.length) {
-                    for (var j in self.img) {
-                        for (var i in self.img) {
+
+                    self.context.fillStyle = "#373737";
+                    for (let j in self.img) {
+                        for (let i in self.img) {
                             if (self.img[j][i])
-                                this.context.fillRect(i * self.stroke, j * self.stroke, self.stroke, self.stroke);
-                            else
-                                this.context.strokeRect(i * self.stroke, j * self.stroke, self.stroke, self.stroke);
+                                self.context.fillRect(i * self.stroke, j * self.stroke, self.stroke, self.stroke);
                         }
                     }
+
+                }
+                self.createField();
+            },
+            createField(){
+                const self = this;
+                self.context.translate(0.5, 0.5);
+                self.context.strokeStyle = "#000000";
+                for (let i = 0; i < this.width * this.stroke + 1; i += this.stroke )
+                {
+                    self.context.beginPath();
+
+                    self.context.moveTo(0 , i);
+                    self.context.lineTo(this.width * this.stroke , i);
+
+                     if(i / this.stroke % 5 === 0){
+                         self.context.lineWidth = 2;
+                     } else{
+                         self.context.lineWidth = 1;
+                     }
+                    self.context.stroke();
+                    self.context.closePath();
+                }
+                self.context.translate(+0.5, +0.5);
+                for (let i = 0; i < this.height * this.stroke+1; i += this.stroke)
+                {
+                    self.context.beginPath();
+
+                    self.context.moveTo(i, 0);
+                    self.context.lineTo(i,this.height * this.stroke);
+
+                    if(i / this.stroke % 5 === 0){
+                        self.context.lineWidth = 2;
+                    } else{
+                        self.context.lineWidth = 1;
+                    }
+                    self.context.stroke();
+
+                    self.context.closePath();
+                   /* self.context.moveTo(i * this.stroke +.5, 0 +.5);
+                    self.context.lineTo(i * this.stroke +.5,this.height * this.stroke +.5);
+                    self.context.stroke();*/
                 }
             },
             getCoords(e){
@@ -115,7 +159,7 @@
             },
             highlightOn(pos){
                 const self = this;
-                this.context.lineWidth = 2;
+                this.context.lineWidth = 1;
                 this.context.strokeStyle = "white";
                 let vCount = (pos.endY - pos.startY +1);
                 let hCount = (pos.endX - pos.startX +1);
@@ -130,7 +174,7 @@
             highlightOff(pos){
                 const self = this;
                 this.context.lineWidth = 2;
-                this.context.strokeStyle = "black";
+                this.context.strokeStyle = "#000000";
                 if((pos.endX - pos.startX))
                     this.context.strokeRect(pos.startX * self.stroke, pos.y * self.stroke, self.stroke * (pos.endX - pos.startX +1), self.stroke);
                 if((pos.endY - pos.startY))
