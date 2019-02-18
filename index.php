@@ -56,5 +56,8 @@ function getColorJson($x, $y){
 
 
     <script src="<?php echo mix('js/app.js'); ?>"></script>
+
+    <script src="http://localhost:35729/livereload.js"></script>
+
   </body>
 </html>

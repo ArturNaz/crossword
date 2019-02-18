@@ -11,12 +11,34 @@ window.app = new Vue({
     },
     beforeCreate() {
         let self = this;
-
+        console.log('beforeCreate');
         $.get('/image.php').then(function (data) {
             self.img = JSON.parse(data);
            // self.init();
         });
     },
+    created(){
+        console.log('created');
+    },
+     beforeMount(){
+         console.log('beforeMount');
+     },
+    mounted(){
+        console.log('mounted');
+    },
+    beforeUpdate(){
+        console.log('beforeUpdate');
+    },
+    updated(){
+        console.log('updated');
+    },
+    methods:{
+        getCoords(e){
+            this.x = e.clientX;
+            this.y = e.clientY;
+        },
+    }
+
 
 
 });

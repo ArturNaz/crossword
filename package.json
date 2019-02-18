@@ -17,5 +17,8 @@
     "laravel-mix": "^0.8.8",
     "node-sass": "^4.5.0",
     "vue": "^2.6.6"
+  },
+  "devDependencies": {
+    "webpack-livereload-plugin": "^1.2.0"
   }
 }
