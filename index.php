@@ -46,10 +46,8 @@ function getColorJson($x, $y){
   <body>
 
     <div id="app">
-        <my-table :img="img" >
-            <my-canvas style="width: 500px; height: 500px;" :img="img">
+        <my-table :img="img" :size="size" v-if="loading" >
 
-            </my-canvas>
         </my-table>
 
     </div>

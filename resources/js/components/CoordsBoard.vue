@@ -47,6 +47,7 @@
         padding: 5px 10px;
         box-shadow: 2px 2px 5px #00000059;
         white-space: nowrap;
+        z-index: 3;
 
     }
     .board p{

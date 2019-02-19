@@ -1,19 +1,21 @@
 <template>
-    <div>
-        <table :style="{'margin-left':(horizontalRowCount*15)+'px'}">
+    <div class="crossword">
+        <table :style="{'margin-left':(horizontalRowCount*size)+'px'}">
             <tr v-for="raw in verticalData">
-                <th v-for="col in raw">{{col}}</th>
+                <th v-for="col in raw" :class="{num:(col > 0)}">{{col}}</th>
             </tr>
 
         </table>
         <div class="row">
             <table>
                 <tr v-for="raw in horizontalData">
-                    <th v-for="col in raw">{{col}}</th>
+                    <th v-for="col in raw" :class="{num:(col > 0)}">{{col}}</th>
                 </tr>
 
             </table>
-            <slot></slot>
+            <my-canvas  :img="img" :width="width" :height="height">
+
+            </my-canvas>
         </div>
 
 
@@ -24,8 +26,10 @@
 </template>
 
 <script>
+    import MyCanvas from './MyCanvas';
     export default {
-        props:['img'],
+        props:['img', 'size'],
+        components: {MyCanvas},
         data() {
             return {
 
@@ -42,7 +46,7 @@
 
         },
        computed:{
-            horizontalData:function(){
+           horizontalData:function(){
 
                 let self = this;
                 let hData = [];
@@ -51,11 +55,11 @@
 
                 if(self.img.length) {
 
-                    for (let j in self.img) {
+                    for (let j = 0; j < this.height; j ++) {
 
-                         temp = 0;
+                        temp = 0;
                         hData[j] = [];
-                        for (let i in self.img[j]) {
+                        for (let i = 0; i < this.width + 1; i ++) {
 
                             if (self.img[j][i]){
                                 temp++;
@@ -63,13 +67,15 @@
                                 temp === 0 || hData[j].push(temp);
                                 temp = 0;
                             }
+                            if(temp === this.width){
+                                hData[j].push(temp);
+                            }
                         }
                         if(hData[j].length > length){
-                           length = hData[j].length
+                            length = hData[j].length
                         }
-
-
                     }
+
                 }
                 for (let j in hData) {
                     hData[j] =  new Array(length - hData[j].length ).fill(' ').concat(hData[j])
@@ -86,26 +92,28 @@
                let temp = 0;
 
                if(self.img.length) {
-
-                   for (let j in self.img) {
+                   for (let j = 0; j < this.width; j ++) {
 
                        temp = 0;
                        hData[j] = [];
-                       for (let i in self.img[j]) {
-
-                           if (self.img[i][j]){
+                       for (let i = 0; i < this.height; i ++) {
+                           if (self.img[i][j]) {
                                temp++;
                            }else{
                                temp === 0 || hData[j].push(temp);
                                temp = 0;
                            }
+
+                           if(temp === this.height){
+                               hData[j].push(temp);
+                           }
+
                        }
                        if(hData[j].length > length){
                            length = hData[j].length
                        }
-
-
                    }
+
                }
                let x = [];
                for (let j in hData) {
@@ -129,23 +137,38 @@
                    return array.length
                });
                return Math.max(...countArray)
-           }
+           },
+           width() {
+
+               return this.img[0].length;
+           },
+           height() {
+               return this.img.length;
+           },
 
        }
     }
 </script>
 
 <style scoped>
+    .crossword{
+
+    }
     table, th, td {
-        border: 1px solid black;
+        border: 1px solid #808080;
         border-collapse: collapse;
-        min-width: 15px;
-        height: 15px;
+        min-width: 20px;
+        height: 20px;
         box-sizing: border-box;
         font-family: Arial;
         font-size: 10px;
         user-select: none;
         pointer-events: none;
+        background: #dadada;
+
+    }
+    .num{
+        background: #d0d0d0;
     }
     .row{
         display: flex;

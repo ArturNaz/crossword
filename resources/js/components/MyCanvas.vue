@@ -1,72 +1,96 @@
 <template>
     <div class="my-canvas-wrapper">
-        <canvas ref="my-canvas" @mousemove="getCoords"></canvas>
+        <canvas ref="my-canvas" @mousemove="getCoords" @contextmenu.prevent="markBox" @click="fillBox"
+                :width="canvasWidth" :height="canvasHeight"></canvas>
+        <canvas class="layer" ref="top-layer" :width="canvasWidth" :height="canvasHeight"></canvas>
         <coords-board :x="x" :y="y" :stroke="stroke" :vc="vCount" :hc="hCount"></coords-board>
+        <!--  <div class="vertical-line" :style="{left:pos.x * stroke + 'px'}"></div>
+          <div class="horizontal-line" :style="{top:pos.y * stroke + 'px','width':width +'px'}"></div>-->
     </div>
 </template>
 
 <script>
 
     import CoordsBoard from './CoordsBoard';
+
     export default {
-        props:['img'],
+        props: ['img', 'width', 'height'],
         components: {CoordsBoard},
         data() {
             return {
-
-              context: null,
-              stroke:15,
-              x:0,
-              y:0,
-              highlightBox:{},
-              vCount:0,
-              hCount:0,
+                field: [],
+                context: null,
+                layer: null,
+                stroke: 20,
+                x: 0,
+                y: 0,
+                highlightBox: {startX: 0, endX: 0, startY: 0, endY: 0, x: 0, y: 0},
+                vCount: 0,
+                hCount: 0,
+                mousedown:false,
 
             }
         },
-        watch:{
-            img(){
-                this.$refs['my-canvas'].width = this.img[0].length * this.stroke;
-                this.$refs['my-canvas'].height = this.img.length * this.stroke;
-                this.init();
-            },
-            pos(newVal, oldVal){
+        watch: {
+
+            pos(newVal, oldVal) {
                 const self = this;
 
-                if(newVal.x !== oldVal.x || newVal.y !== oldVal.y){}
-                self.highlightBox = self.calcHighlight(self.pos.x, self.pos.y);
+                if (newVal.x !== oldVal.x || newVal.y !== oldVal.y) {
+                    self.highlightBox = self.calcHighlight(self.pos.x, self.pos.y);
+                    if(self.mousedown){
+                        self.fillBox(true);
+                    }
+                }
+
+
 
             },
 
-            highlightBox(newVal, oldVal){
+            highlightBox(newVal, oldVal) {
                 const self = this;
 
-                self.highlightOff(oldVal);
-                self.highlightOn(newVal);
+                try {
+                    self.highlightOff(oldVal);
+                    self.highlightOn(newVal);
+                } catch (e) {
+
+                }
+
 
             }
         },
         mounted() {
+            const self = this;
 
-            // We can't access the rendering context until the canvas is mounted to the DOM.
-            // Once we have it, provide it to all child components.
-            this.context = this.$refs['my-canvas'].getContext('2d');
+            for (let i in self.img) {
+                self.field[i] = new Array(self.width).fill(0);
+            }
 
-            // Resize the canvas to fit its parent's width.
-            // Normally you'd use a more flexible resize system.
-            this.$refs['my-canvas'].width = this.img.length;
-            this.$refs['my-canvas'].height = this.img.length;
 
-            this.init();
+            self.context = self.$refs['my-canvas'].getContext('2d');
+            self.layer = self.$refs['top-layer'].getContext('2d');
+            self.$refs['my-canvas'].addEventListener('mousedown',e =>{
+                e.preventDefault();
+                self.fillBox(true);
+               self.mousedown = true;
+            });
+            self.$refs['my-canvas'].addEventListener('mouseup',e =>{
+                e.preventDefault();
+                self.mousedown = false;
+                self.fillBox(true);
+            });
+            self.init();
         },
-        methods:{
+        methods: {
             init() {
 
                 const self = this;
 
-                if(self.img.length) {
 
-                    self.context.fillStyle = "#373737";
+                if (false && self.img.length) {
+
+                    self.context.fillStyle = "#adadad";
                     for (let j in self.img) {
                         for (let i in self.img) {
                             if (self.img[j][i])
@@ -77,129 +101,205 @@
                 }
                 self.createField();
             },
-            createField(){
+            fillBox(mode) {
+
                 const self = this;
-                self.context.translate(0.5, 0.5);
+                if (mode || self.field[self.pos.y][self.pos.x] === 0) {
+                    self.field[self.pos.y][self.pos.x] = 1;
+                    self.context.fillStyle = "#373737";
+
+                } else {
+                    self.field[self.pos.y][self.pos.x] = 0;
+                    self.context.fillStyle = "#ffffff";
+                }
+
+                self.context.fillRect(self.pos.x * self.stroke + 1, self.pos.y * self.stroke + 1, self.stroke - 1, self.stroke - 1);
+            },
+            markBox(e) {
+
+                const self = this;
+                self.context.fillStyle = "#ffffff";
+                self.context.fillRect(self.pos.x * self.stroke + 1, self.pos.y * self.stroke + 1, self.stroke - 1, self.stroke - 1);
+                if (self.field[self.pos.x][self.pos.y] > 1) {
+                    self.field[self.pos.x][self.pos.y] = 0;
+
+                } else {
+
+                    self.field[self.pos.x][self.pos.y] = 3;
+                    self.drawMark();
+
+                }
+
+
+            },
+            drawMark() {
+                const self = this;
                 self.context.strokeStyle = "#000000";
-                for (let i = 0; i < this.width * this.stroke + 1; i += this.stroke )
-                {
+                self.context.lineWidth = 1;
+                self.context.beginPath();
+
+                self.context.moveTo(self.pos.x * self.stroke + 1,self.pos.y * self.stroke + 1);
+                self.context.lineTo(self.pos.x * self.stroke + self.stroke,self.pos.y * self.stroke  + self.stroke);
+                self.context.stroke();
+                self.context.closePath();
+
+                self.context.beginPath();
+                self.context.moveTo(self.pos.x * self.stroke  + self.stroke,self.pos.y * self.stroke + 1);
+                self.context.lineTo(self.pos.x * self.stroke,self.pos.y * self.stroke  + self.stroke);
+                self.context.stroke();
+                self.context.closePath();
+            },
+            createField() {
+                const self = this;
+                self.context.strokeStyle = "#8F8F8F";
+                for (let i = 0; i < this.width * this.stroke + 1; i += this.stroke) {
                     self.context.beginPath();
 
-                    self.context.moveTo(0 , i);
-                    self.context.lineTo(this.width * this.stroke , i);
 
-                     if(i / this.stroke % 5 === 0){
-                         self.context.lineWidth = 2;
-                     } else{
-                         self.context.lineWidth = 1;
-                     }
+                    if (i / this.stroke % 5 === 0) {
+                        self.context.moveTo(0, i);
+                        self.context.lineTo(this.width * this.stroke, i);
+                        self.context.lineWidth = 2;
+                    } else {
+
+                        self.context.moveTo(.5, i + .5);
+                        self.context.lineTo(this.width * this.stroke + .5, i + .5);
+                        self.context.lineWidth = 1;
+                    }
                     self.context.stroke();
                     self.context.closePath();
                 }
-                self.context.translate(+0.5, +0.5);
-                for (let i = 0; i < this.height * this.stroke+1; i += this.stroke)
-                {
+                for (let i = 0; i < this.height * this.stroke + 1; i += this.stroke) {
                     self.context.beginPath();
 
-                    self.context.moveTo(i, 0);
-                    self.context.lineTo(i,this.height * this.stroke);
 
-                    if(i / this.stroke % 5 === 0){
+                    if (i / this.stroke % 5 === 0) {
                         self.context.lineWidth = 2;
-                    } else{
+                        self.context.moveTo(i, 0);
+                        self.context.lineTo(i, this.height * this.stroke);
+                    } else {
                         self.context.lineWidth = 1;
+                        self.context.moveTo(i + .5, .5);
+                        self.context.lineTo(i + .5, this.height * this.stroke + .5);
+
                     }
                     self.context.stroke();
 
                     self.context.closePath();
-                   /* self.context.moveTo(i * this.stroke +.5, 0 +.5);
-                    self.context.lineTo(i * this.stroke +.5,this.height * this.stroke +.5);
-                    self.context.stroke();*/
                 }
             },
-            getCoords(e){
+            getCoords(e) {
                 const self = this;
                 self.x = e.offsetX;
                 self.y = e.offsetY;
             },
 
-            isFilled(x,y){
-                if(x > this.width || y > this.height || x < 0 || y < 0)
+            isFilled(x, y) {
+                if (x > this.width || y > this.height || x < 0 || y < 0)
                     return false;
 
-                return Boolean(this.img[y][x]);
+                return Boolean(this.field[y][x] === 1);
             },
-            calcHighlight(x,y){
+            calcHighlight(x, y) {
                 const self = this;
-                if(!self.isFilled(x,y))
+                if (!self.isFilled(x, y))
                     return;
 
-                let startX = x,startY = y;
+                let startX = x, startY = y;
                 let endX = x, endY = y;
-                let tempX = x,tempY = y;
+                let tempX = x, tempY = y;
 
-                while(this.isFilled(--tempX,y)){
+                while (this.isFilled(--tempX, y)) {
                     --startX;
                 }
                 tempX = x;
-                while(this.isFilled(++tempX,y)){
+                while (this.isFilled(++tempX, y)) {
                     ++endX;
                 }
 
-                while(this.isFilled(x, --tempY)){
+                while (this.isFilled(x, --tempY)) {
                     --startY;
                 }
                 tempY = y;
-                while(this.isFilled(x, ++tempY)){
+                while (this.isFilled(x, ++tempY)) {
                     ++endY;
                 }
 
-                return {startX:startX, endX:endX, startY:startY, endY:endY, x:x, y:y};
+                return {startX: startX, endX: endX, startY: startY, endY: endY, x: x, y: y};
 
             },
-            highlightOn(pos){
+            highlightOn(pos) {
                 const self = this;
-                this.context.lineWidth = 1;
-                this.context.strokeStyle = "white";
-                let vCount = (pos.endY - pos.startY +1);
-                let hCount = (pos.endX - pos.startX +1);
+                this.layer.lineWidth = 2;
+                this.layer.fillStyle = "rgba(255,255,255,0.2)";
+                let vCount = (pos.endY - pos.startY + 1);
+                let hCount = (pos.endX - pos.startX + 1);
 
-                if((pos.endX - pos.startX))
-                    this.context.strokeRect(pos.startX * self.stroke, pos.y * self.stroke, self.stroke * (pos.endX - pos.startX +1), self.stroke);
-                if((pos.endY - pos.startY))
-                    this.context.strokeRect(pos.x * self.stroke, pos.startY * self.stroke, self.stroke, self.stroke * (pos.endY - pos.startY +1));
+                if ((pos.endX - pos.startX))
+                    this.layer.fillRect(pos.startX * self.stroke, pos.y * self.stroke, self.stroke * (pos.endX - pos.startX + 1), self.stroke);
+                if ((pos.endY - pos.startY))
+                    this.layer.fillRect(pos.x * self.stroke, pos.startY * self.stroke, self.stroke, self.stroke * (pos.endY - pos.startY + 1));
                 self.vCount = vCount;
                 self.hCount = hCount;
             },
-            highlightOff(pos){
+            highlightOff(pos) {
                 const self = this;
-                this.context.lineWidth = 2;
-                this.context.strokeStyle = "#000000";
-                if((pos.endX - pos.startX))
-                    this.context.strokeRect(pos.startX * self.stroke, pos.y * self.stroke, self.stroke * (pos.endX - pos.startX +1), self.stroke);
-                if((pos.endY - pos.startY))
-                    this.context.strokeRect(pos.x * self.stroke, pos.startY * self.stroke, self.stroke, self.stroke * (pos.endY - pos.startY +1));
+                this.layer.lineWidth = 2;
+                this.layer.fillStyle = "#000000";
+                if ((pos.endX - pos.startX))
+                    this.layer.clearRect(pos.startX * self.stroke, pos.y * self.stroke, self.stroke * (pos.endX - pos.startX + 1), self.stroke);
+                if ((pos.endY - pos.startY))
+                    this.layer.clearRect(pos.x * self.stroke, pos.startY * self.stroke, self.stroke, self.stroke * (pos.endY - pos.startY + 1));
             }
 
         },
-        computed:{
-             width(){
-                 return this.img[0].length;
-             },
-            height(){
-                return this.img.length;
+        computed: {
+
+            canvasWidth() {
+                return this.width * this.stroke;
             },
-            pos(){
+            canvasHeight() {
+                return this.height * this.stroke;
+            },
+            pos() {
                 return {
-                    x:Math.floor(this.x / this.stroke),
-                    y:Math.floor(this.y / this.stroke)
+                    x: Math.floor(this.x / this.stroke),
+                    y: Math.floor(this.y / this.stroke)
                 };
             },
         }
     }
 </script>
 <style scoped>
-    .my-canvas-wrapper{
+    .my-canvas-wrapper {
         position: relative;
+        border: 1px solid black;
+        box-sizing: border-box;
+        background: white;
+    }
+
+    .vertical-line {
+        position: absolute;
+        width: 15px;
+        height: 100%;
+        top: 0;
+        background: #ffffff61;
+    }
+
+    .horizontal-line {
+        position: absolute;
+        width: 100%;
+        height: 15px;
+        top: 0;
+        background: #ffffff61;
+    }
+
+    .layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        pointer-events: none;
+
     }
 </style>
