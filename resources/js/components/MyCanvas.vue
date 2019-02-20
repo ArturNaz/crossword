@@ -1,7 +1,8 @@
 <template>
-    <div class="my-canvas-wrapper">
+    <div class="my-canvas-wrapper"  :style="{width:canvasWidth + 'px', height:canvasHeight + 'px'}">
         <canvas ref="my-canvas" @mousemove="getCoords" @contextmenu.prevent="markBox" @click="fillBox"
                 :width="canvasWidth" :height="canvasHeight"></canvas>
+        <canvas class="layer" ref="grid-layer" :width="canvasWidth" :height="canvasHeight"></canvas>
         <canvas class="layer" ref="top-layer" :width="canvasWidth" :height="canvasHeight"></canvas>
         <coords-board :x="x" :y="y" :stroke="stroke" :vc="vCount" :hc="hCount"></coords-board>
         <!--  <div class="vertical-line" :style="{left:pos.x * stroke + 'px'}"></div>
@@ -20,6 +21,7 @@
             return {
                 field: [],
                 context: null,
+                gridLayer: null,
                 layer: null,
                 stroke: 20,
                 x: 0,
@@ -27,7 +29,7 @@
                 highlightBox: {startX: 0, endX: 0, startY: 0, endY: 0, x: 0, y: 0},
                 vCount: 0,
                 hCount: 0,
-                mousedown:false,
+                mousedown:{right:false, left:false},
 
             }
         },
@@ -35,11 +37,16 @@
 
             pos(newVal, oldVal) {
                 const self = this;
-
                 if (newVal.x !== oldVal.x || newVal.y !== oldVal.y) {
-                    self.highlightBox = self.calcHighlight(self.pos.x, self.pos.y);
-                    if(self.mousedown){
+                    try {
+                        self.highlightBox = self.calcHighlight(self.pos.x, self.pos.y);
+                    }catch (e) {
+                        console.error(e);
+                    }
+                    if(self.mousedown.left){
                         self.fillBox(true);
+                    }else if(self.mousedown.right){
+                        self.markBox();
                     }
                 }
 
@@ -51,10 +58,10 @@
                 const self = this;
 
                 try {
-                    self.highlightOff(oldVal);
-                    self.highlightOn(newVal);
+                    oldVal && self.highlightOff(oldVal);
+                    newVal && self.highlightOn(newVal);
                 } catch (e) {
-
+                    console.log(newVal, oldVal);
                 }
 
 
@@ -70,15 +77,29 @@
 
             self.context = self.$refs['my-canvas'].getContext('2d');
             self.layer = self.$refs['top-layer'].getContext('2d');
+            self.gridLayer = self.$refs['grid-layer'].getContext('2d');
+            
             self.$refs['my-canvas'].addEventListener('mousedown',e =>{
                 e.preventDefault();
-                self.fillBox(true);
-               self.mousedown = true;
+                if (e.which === 1) {
+                    self.fillBox(true);
+                    self.mousedown.left = true;
+                } else {
+                    self.markBox();
+                    self.mousedown.right = true;
+                }
+
             });
             self.$refs['my-canvas'].addEventListener('mouseup',e =>{
                 e.preventDefault();
-                self.mousedown = false;
-                self.fillBox(true);
+                if (e.which === 1) {
+                    self.fillBox(true);
+                    self.mousedown.left = false;
+                } else {
+                    self.markBox();
+                    self.mousedown.right = false;
+                }
+
             });
             self.init();
         },
@@ -104,6 +125,8 @@
             fillBox(mode) {
 
                 const self = this;
+                let image = new Image();
+                image.src = '/public/images/box.png';
                 if (mode || self.field[self.pos.y][self.pos.x] === 0) {
                     self.field[self.pos.y][self.pos.x] = 1;
                     self.context.fillStyle = "#373737";
@@ -113,11 +136,13 @@
                     self.context.fillStyle = "#ffffff";
                 }
 
-                self.context.fillRect(self.pos.x * self.stroke + 1, self.pos.y * self.stroke + 1, self.stroke - 1, self.stroke - 1);
+                self.context.drawImage(image,self.pos.x * self.stroke + 1, self.pos.y * self.stroke + 1, self.stroke - 1, self.stroke - 1);
             },
             markBox(e) {
 
                 const self = this;
+                let image = new Image();
+                image.src = '/public/images/point.png';
                 self.context.fillStyle = "#ffffff";
                 self.context.fillRect(self.pos.x * self.stroke + 1, self.pos.y * self.stroke + 1, self.stroke - 1, self.stroke - 1);
                 if (self.field[self.pos.x][self.pos.y] > 1) {
@@ -126,7 +151,8 @@
                 } else {
 
                     self.field[self.pos.x][self.pos.y] = 3;
-                    self.drawMark();
+                    //self.drawMark();
+                    self.context.drawImage(image,self.pos.x * self.stroke + 1, self.pos.y * self.stroke + 1, self.stroke - 1, self.stroke - 1);
 
                 }
 
@@ -151,41 +177,41 @@
             },
             createField() {
                 const self = this;
-                self.context.strokeStyle = "#8F8F8F";
+                self.gridLayer.strokeStyle = "#b4b2d7";
                 for (let i = 0; i < this.width * this.stroke + 1; i += this.stroke) {
-                    self.context.beginPath();
+                    self.gridLayer.beginPath();
 
 
                     if (i / this.stroke % 5 === 0) {
-                        self.context.moveTo(0, i);
-                        self.context.lineTo(this.width * this.stroke, i);
-                        self.context.lineWidth = 2;
+                        self.gridLayer.moveTo(0, i);
+                        self.gridLayer.lineTo(this.width * this.stroke, i);
+                        self.gridLayer.lineWidth = 2;
                     } else {
 
-                        self.context.moveTo(.5, i + .5);
-                        self.context.lineTo(this.width * this.stroke + .5, i + .5);
-                        self.context.lineWidth = 1;
+                        self.gridLayer.moveTo(.5, i + .5);
+                        self.gridLayer.lineTo(this.width * this.stroke + .5, i + .5);
+                        self.gridLayer.lineWidth = 1;
                     }
-                    self.context.stroke();
-                    self.context.closePath();
+                    self.gridLayer.stroke();
+                    self.gridLayer.closePath();
                 }
                 for (let i = 0; i < this.height * this.stroke + 1; i += this.stroke) {
-                    self.context.beginPath();
+                    self.gridLayer.beginPath();
 
 
                     if (i / this.stroke % 5 === 0) {
-                        self.context.lineWidth = 2;
-                        self.context.moveTo(i, 0);
-                        self.context.lineTo(i, this.height * this.stroke);
+                        self.gridLayer.lineWidth = 2;
+                        self.gridLayer.moveTo(i, 0);
+                        self.gridLayer.lineTo(i, this.height * this.stroke);
                     } else {
-                        self.context.lineWidth = 1;
-                        self.context.moveTo(i + .5, .5);
-                        self.context.lineTo(i + .5, this.height * this.stroke + .5);
+                        self.gridLayer.lineWidth = 1;
+                        self.gridLayer.moveTo(i + .5, .5);
+                        self.gridLayer.lineTo(i + .5, this.height * this.stroke + .5);
 
                     }
-                    self.context.stroke();
+                    self.gridLayer.stroke();
 
-                    self.context.closePath();
+                    self.gridLayer.closePath();
                 }
             },
             getCoords(e) {
@@ -195,7 +221,7 @@
             },
 
             isFilled(x, y) {
-                if (x > this.width || y > this.height || x < 0 || y < 0)
+                if (x > this.width -1 || y > this.height -1 || x < 0 || y < 0)
                     return false;
 
                 return Boolean(this.field[y][x] === 1);
@@ -270,12 +296,15 @@
         }
     }
 </script>
-<style scoped>
+<style scoped lang=scss>
     .my-canvas-wrapper {
         position: relative;
         border: 1px solid black;
         box-sizing: border-box;
         background: white;
+        p{
+            color:red;
+        }
     }
 
     .vertical-line {
