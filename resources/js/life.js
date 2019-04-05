@@ -96,7 +96,7 @@ window.life = new Vue({
         },
         drawSpace(){
             const self = this;
-            self.grid.strokeStyle = "#ffffff";
+            self.grid.strokeStyle = "#302f2b";
             for (let i = 0; i < this.width * this.stroke + 1; i += this.stroke) {
                 self.grid.beginPath();
                     self.grid.moveTo(.5, i + .5);
@@ -119,14 +119,14 @@ window.life = new Vue({
         },
         drawPoints(){
             const self = this;
-            self.ctx.fillStyle = "#e17f2a";
+            self.ctx.fillStyle = "#f4c633";
             for(let i = 0; i < self.width; i++){
                 for(let j = 0; j < self.height; j++){
                     if (self.points[i][j]){
                         //self.ctx.fillRect(i * self.stroke, j * self.stroke, self.stroke, self.stroke);
 
                         self.ctx.beginPath();
-                        self.ctx.strokeStyle = "#e17f2a";
+                        self.ctx.strokeStyle = "#f4c633";
                         self.ctx.arc(i * self.stroke - self.stroke/2, j * self.stroke - self.stroke/2, self.stroke * 0.25, 0, 2 * Math.PI);
                         self.ctx.stroke();
                         self.grid.closePath();
