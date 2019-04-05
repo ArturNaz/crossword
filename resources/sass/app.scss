@@ -1,7 +1,14 @@
 @import "~normalize.css";
 body {
-background: url("/public/images/background.jpg");
+//background: url("/public/images/background.jpg");
 	background-size: 100px;
 	font-size: 14px;
 	//color:slategray;
+}
+canvas{
+	position: absolute;
+	border:1px solid black;
+}
+#grid{
+	position: absolute;
 }
