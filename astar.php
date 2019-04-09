@@ -20,7 +20,7 @@ require_once 'mix.php';
 <body>
 <div id="astar">
     <canvas id="canvas" ref="my-canvas" ></canvas>
-    <canvas id="grid" ref="my-grid" ></canvas>
+    <canvas id="grid" ref="my-grid" @click="addWall"></canvas>
 </div>
 
 
